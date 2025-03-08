@@ -1,0 +1,101 @@
+import itertools
+
+def generate_playfair_matrix(keyword):
+    """Generate a 5x5 Playfair cipher matrix from a keyword."""
+    alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"  # I/J are combined
+    keyword = "".join(dict.fromkeys(keyword.upper().replace("J", "I")))  # Remove duplicates, replace J with I
+    matrix_string = keyword + "".join(c for c in alphabet if c not in keyword)
+    
+    # Convert to 5x5 matrix
+    matrix = [list(matrix_string[i:i+5]) for i in range(0, 25, 5)]
+    
+    return matrix
+
+def find_position(matrix, letter):
+    """Find the row and column of a letter in the Playfair matrix."""
+    for row in range(5):
+        for col in range(5):
+            if matrix[row][col] == letter:
+                return row, col
+    return None
+
+def process_digraphs(text):
+    """Format text into digraphs, inserting 'X' where necessary."""
+    text = text.upper().replace("J", "I").replace(" ", "")
+    digraphs = []
+    i = 0
+
+    while i < len(text):
+        if i == len(text) - 1:
+            digraphs.append(text[i] + 'X')  # Add 'X' if there's an odd letter
+            break
+        elif text[i] == text[i + 1]:
+            digraphs.append(text[i] + 'X')  # Insert 'X' between duplicate letters
+            i += 1
+        else:
+            digraphs.append(text[i] + text[i + 1])
+            i += 2
+
+    return digraphs
+
+def encrypt_digraph(matrix, digraph):
+    """Encrypt a digraph using the Playfair cipher."""
+    row1, col1 = find_position(matrix, digraph[0])
+    row2, col2 = find_position(matrix, digraph[1])
+
+    if row1 == row2:  # Same row: move right
+        return matrix[row1][(col1 + 1) % 5] + matrix[row2][(col2 + 1) % 5]
+    elif col1 == col2:  # Same column: move down
+        return matrix[(row1 + 1) % 5][col1] + matrix[(row2 + 1) % 5][col2]
+    else:  # Rectangle rule: swap columns
+        return matrix[row1][col2] + matrix[row2][col1]
+
+def decrypt_digraph(matrix, digraph):
+    """Decrypt a digraph using the Playfair cipher."""
+    row1, col1 = find_position(matrix, digraph[0])
+    row2, col2 = find_position(matrix, digraph[1])
+
+    if row1 == row2:  # Same row: move left
+        return matrix[row1][(col1 - 1) % 5] + matrix[row2][(col2 - 1) % 5]
+    elif col1 == col2:  # Same column: move up
+        return matrix[(row1 - 1) % 5][col1] + matrix[(row2 - 1) % 5][col2]
+    else:  # Rectangle rule: swap columns
+        return matrix[row1][col2] + matrix[row2][col1]
+
+def playfair_cipher(text, matrix, mode="encrypt"):
+    """Encrypt or decrypt text using the Playfair cipher."""
+    digraphs = process_digraphs(text)
+    processed_text = ""
+
+    for digraph in digraphs:
+        if mode == "encrypt":
+            processed_text += encrypt_digraph(matrix, digraph)
+        else:
+            processed_text += decrypt_digraph(matrix, digraph)
+
+    return processed_text
+
+# Get user input
+keyword = input("🔑 Enter the keyword for Playfair cipher: ").upper()
+matrix = generate_playfair_matrix(keyword)
+
+# Display the Playfair matrix
+print("\n🟢 Playfair Matrix:")
+for row in matrix:
+    print(" ".join(row))
+
+# Get the operation type
+choice = input("\n🔄 Do you want to (E)ncrypt or (D)ecrypt? ").strip().upper()
+
+# Get text input from the user
+text = input("📝 Enter the text: ").upper()
+
+# Encrypt or Decrypt
+if choice == "E":
+    result = playfair_cipher(text, matrix, mode="encrypt")
+    print("\n🔐 Encrypted Text:", result)
+elif choice == "D":
+    result = playfair_cipher(text, matrix, mode="decrypt")
+    print("\n🔓 Decrypted Text:", result)
+else:
+    print("❌ Invalid choice! Please enter 'E' for encrypt or 'D' for decrypt.")
