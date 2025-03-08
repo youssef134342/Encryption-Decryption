@@ -1,0 +1,45 @@
+import itertools
+import string
+
+def decrypt_with_key(ciphertext, key_mapping):
+    """Decrypt the ciphertext using a given key mapping"""
+    return "".join(key_mapping.get(c, c) for c in ciphertext)
+
+def brute_force_monoalphabetic(ciphertext, max_attempts=10):
+    """Perform a brute-force attack on a monoalphabetic substitution cipher"""
+    
+    # Extract unique letters from the ciphertext (ignoring spaces)
+    cipher_alphabet = sorted(set(ciphertext.replace(" ", "")))
+    
+    # Standard English alphabet (A-Z)
+    plain_alphabet = string.ascii_uppercase
+    
+    # Generate all possible letter mappings (permutations)
+    possible_mappings = itertools.permutations(plain_alphabet, len(cipher_alphabet))
+    
+    results = []
+    for i, mapping in enumerate(possible_mappings):
+        if i >= max_attempts:  # Limit the number of attempts for efficiency
+            break
+        
+        # Create a substitution mapping
+        key_mapping = {cipher: plain for cipher, plain in zip(cipher_alphabet, mapping)}
+        
+        # Decrypt the ciphertext using the mapping
+        decrypted_text = decrypt_with_key(ciphertext, key_mapping)
+        
+        results.append(decrypted_text)
+        print(f"Attempt {i+1}: {decrypted_text}")  # Print each attempt
+    
+    return results
+
+# ✅ Ask the user to enter the encrypted message
+ciphertext = input("🔒 Enter the encrypted message: ").upper()  # Convert input to uppercase
+
+# Run the brute-force attack with a limited number of results
+possible_decryptions = brute_force_monoalphabetic(ciphertext, max_attempts=10)
+
+# Display the top 5 results
+print("\n🔓 Top 5 possible decryptions:")
+for i, text in enumerate(possible_decryptions[:5]):
+    print(f"Decryption {i+1}: {text}")
